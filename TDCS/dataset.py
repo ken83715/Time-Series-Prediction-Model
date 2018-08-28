@@ -16,7 +16,7 @@ class TDCSDATA:
         """
         set parameters
         """
-        self.filepath = 'E:/01F0467S-01F0509S.csv'
+        self.filepath = 'D:/python/jupyter/data/TDCSDIVIDEBYSEG/01F0467S-01F0509S.csv'
         self.roaddata = []
         self.roadtime = []
         self.std = []
@@ -25,6 +25,7 @@ class TDCSDATA:
         self.maxd = 0
         self.mind = 0
         self.std_range = std_r
+        self.data_per_day = 288
 
         self.readdata()
         self.calculate_std_avg()
@@ -45,7 +46,7 @@ class TDCSDATA:
     
     def calculate_std_avg(self):
         dtime = []
-        for i in range(288):
+        for i in range(self.data_per_day):
             dtime.append([])
         for i in range(len(self.roaddata)):
             dtime[self.roadtime[i]].append(self.roaddata[i])

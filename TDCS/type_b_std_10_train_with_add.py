@@ -12,63 +12,37 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from RNNmodels2 import RNNv1, neural, ADDv1
+import dataset
 
 input_num = 5
 
-#read data
-filepath = 'D:/Python/Jupyter/data/TDCSDIVIDEBYSEG/01F0467S-01F0509S.csv'
-roaddata = []
-roadtime = []
-with open(filepath, newline='', encoding='utf-8') as f:
-    reader = csv.reader(f)
-    next(reader, None)
-    for row in reader:
-        if row[18] != 'Null':
-            roaddata.append(int(row[18]))
-        else:
-            roaddata.append(193)
-        t1 = row[20].split(':')
-        t2 = int((int(t1[0]) * 60 + int(t1[1])) / 5)
-        roadtime.append(t2)
-f.close()
+#==========================
+stdn_str = '10'
+stdn_str2 = '1.0'
+stdn = 1
+#==========================
 
-#calculate std avg
-dtime = []
-for i in range(288):
-    dtime.append([])
-for i in range(len(roaddata)):
-    dtime[roadtime[i]].append(roaddata[i])
+test_day = 7
+data_per_day = 288
 
-std = []
-avg = []
-for t in dtime:
-    std.append(np.std(np.array(t)))
-    avg.append(np.mean(np.array(t)))
+DATASET = dataset.TDCSDATA(stdn)
+roaddata = DATASET.roaddata
+roadtime = DATASET.roadtime
+DATASET.get_cleardata_totalavg()
+cleardata = DATASET.cleardata
 
-def normaldata(data, avg, std):
-    if data > avg - std and data < avg + std:
-        return True
-    else:
-        return False
+model_path = 'TDCS/models/b_std_' + stdn_str + '_add_r.pkl'
+model_h_path = 'TDCS/models/b_std_' + stdn_str + '_add_r_h.pkl'
 
 #load base model
-f = open('TDCS/models/b_std_10_base.pkl', 'rb')
+f = open('TDCS/models/b_std_' + stdn_str + '_base.pkl', 'rb')
 baseneu = pickle.load(f)
-f2 = open('TDCS/models/b_std_10_base_h.pkl', 'rb')
+f2 = open('TDCS/models/b_std_' + stdn_str + '_base_h.pkl', 'rb')
 hammneu = pickle.load(f2)
 
 #get max min
 maxd = baseneu.maxd
 mind = baseneu.mind
-
-#resize to -1 ~ 1
-def to_std(x):
-    newx = []
-    for i in x:
-        newx.append(2 * (i - mind) / (maxd - mind) - 1)
-    return newx
-def to_orig(x):
-    return (x + 1) / 2 * (maxd - mind) + mind
 
 #train test split
 train_in = []
@@ -103,26 +77,27 @@ for i in range(128667, len(roaddata) - input_num):
     test_time.append(temp2)
 
 #training
-neural_num = 60
+neu_try_num = 10
 
 bestadd = ADDv1.Add_model()
 besterror = 100000000
-for n in range(neural_num): #num of neural network
+for n in range(neu_try_num): #num of neural network
     testadd = ADDv1.Add_model()
     error = 0
     for i in range(len(train_in)):
         try:
             out = 0
-            inputbase = to_std(train_in[i])
-            if normaldata(train_in[i][-1], avg[train_time[i][-1]], std[train_time[i][-1]]) != True:
+            inputbase = DATASET.array_to_std(train_in[i])
+            if DATASET.normaldata(train_in[i][-1], DATASET.avg[train_time[i][-1]], DATASET.std[train_time[i][-1]]) != True:
                 baseneu.forward(inputbase)
                 testadd.forward(inputbase)
-                out = to_orig(baseneu.output[0][0]) + to_orig(testadd.output[0][0])
+                out = DATASET.to_orig(baseneu.output[0][0]) + DATASET.to_orig(testadd.output[0][0])
             else:
                 baseneu.forward(inputbase)
-                out = to_orig(baseneu.output[0][0])
+                out = DATASET.to_orig(baseneu.output[0][0])
             error = error + (train_exp[i] - out) * (train_exp[i] - out)
         except:
+            print('exception')
             testadd = ADDv1.Add_model()
 
     error = math.sqrt(error / len(train_in))
@@ -131,26 +106,27 @@ for n in range(neural_num): #num of neural network
     if error < besterror:
         bestadd = testadd
         besterror = error
-bestadd.savemodel('TDCS/models/b_std_10_add.pkl')
+bestadd.savemodel(model_path)
 
 bestadd_h = ADDv1.Add_model()
 besterror = 100000000
-for n in range(neural_num): #num of neural network
+for n in range(neu_try_num): #num of neural network
     testadd_h = ADDv1.Add_model()
     error = 0
     for i in range(len(train_in)):
         try:
             out = 0
-            inputbase = to_std(train_in[i])
-            if normaldata(train_in[i][-1], avg[train_time[i][-1]], std[train_time[i][-1]]) != True:
+            inputbase = DATASET.array_to_std(train_in[i])
+            if DATASET.normaldata(train_in[i][-1], DATASET.avg[train_time[i][-1]], DATASET.std[train_time[i][-1]]) != True:
                 y = hammneu.forward(inputbase)
                 testadd_h.forward(inputbase)
-                out = to_orig(y[0]) + to_orig(testadd_h.output[0][0])
+                out = DATASET.to_orig(y[0]) + DATASET.to_orig(testadd_h.output[0][0])
             else:
                 y = hammneu.forward(inputbase)
-                out = to_orig(y[0])
+                out = DATASET.to_orig(y[0])
             error = error + (train_exp[i] - out) * (train_exp[i] - out)
         except:
+            print('exception')
             testadd_h = ADDv1.Add_model()
 
     error = math.sqrt(error / len(train_in))
@@ -159,73 +135,78 @@ for n in range(neural_num): #num of neural network
     if error < besterror:
         bestadd_h = testadd_h
         besterror = error
-bestadd_h.savemodel('TDCS/models/b_std_10_add_h.pkl')
+bestadd_h.savemodel(model_h_path)
 
 #testing
-test_day = 14
 x = []
-for i in range(288 * test_day):
+for i in range(data_per_day * test_day):
     x.append(i + 1)
 
 y1 = []
 y2 = []
 error = 0
 errorlist = []
-for i in range(288 * test_day):
+for i in range(data_per_day * test_day):
     out = 0
-    inputbase = to_std(test_in[i])
-    if normaldata(test_in[i][-1], avg[test_time[i][-1]], std[test_time[i][-1]]) != True:
+    inputbase = DATASET.array_to_std(test_in[i])
+    if DATASET.normaldata(test_in[i][-1], DATASET.avg[test_time[i][-1]], DATASET.std[test_time[i][-1]]) != True:
         baseneu.forward(inputbase)
         bestadd.forward(inputbase)
-        out = to_orig(baseneu.output[0][0]) + to_orig(bestadd.output[0][0])
+        out = DATASET.to_orig(baseneu.output[0][0]) + DATASET.to_orig(bestadd.output[0][0])
     else:
         baseneu.forward(inputbase)
-        out = to_orig(baseneu.output[0][0])
+        out = DATASET.to_orig(baseneu.output[0][0])
     error = error + (test_exp[i] - out) * (test_exp[i] - out)
     errorlist.append(abs(test_exp[i] - out))
     y1.append(test_exp[i])
     y2.append(out)
-error = math.sqrt(error / (288 * test_day))
+error = math.sqrt(error / (data_per_day * test_day))
 print('basicRNN rmse:', error)
 
 y1h = []
 y2h = []
 error = 0
 errorlist_h = []
-for i in range(288 * test_day):
+for i in range(data_per_day * test_day):
     out = 0
-    inputbase = to_std(test_in[i])
-    if normaldata(test_in[i][-1], avg[test_time[i][-1]], std[test_time[i][-1]]) != True:
+    inputbase = DATASET.array_to_std(test_in[i])
+    if DATASET.normaldata(test_in[i][-1], DATASET.avg[test_time[i][-1]], DATASET.std[test_time[i][-1]]) != True:
         y = hammneu.forward(inputbase)
         bestadd_h.forward(inputbase)
-        out = to_orig(y[0]) + to_orig(bestadd_h.output[0][0])
+        out = DATASET.to_orig(y[0]) + DATASET.to_orig(bestadd_h.output[0][0])
     else:
         y = hammneu.forward(inputbase)
-        out = to_orig(y[0])
+        out = DATASET.to_orig(y[0])
     error = error + (test_exp[i] - out) * (test_exp[i] - out)
     errorlist_h.append(abs(test_exp[i] - out))
     y1h.append(test_exp[i])
     y2h.append(out)
-error = math.sqrt(error / (288 * test_day))
+error = math.sqrt(error / (data_per_day * test_day))
 print('Hamm rmse:', error)
 
 plt.figure(figsize=(20,5))
-plt.title('Random std 1.0 Performance')
+plt.title('Random std ' + stdn_str2 + ' Performance')
 plt.plot(x, y1, '--', c='grey', label = 'act', linewidth=2.0)
 plt.plot(x, y2, '-', c='black', label='basicRNN with add')
+plt.xlabel('time')
+plt.ylabel('second')
 plt.legend(loc='upper right')
 plt.show()
 
 plt.figure(figsize=(20,5))
-plt.title('Random std 1.0 Performance')
+plt.title('Random std ' + stdn_str2 + ' Performance')
 plt.plot(x, y1, '--', c='grey', label = 'act', linewidth=2.0)
 plt.plot(x, y2h, '-.', c='black', label='Hamm with add')
+plt.xlabel('time')
+plt.ylabel('second')
 plt.legend(loc='upper right')
 plt.show()
 
 bins = np.linspace(0, 100, 10)
 plt.figure(figsize=(15,5))
-plt.title('Random std 1.0 with Add Error distribution')
+plt.title('Random std ' + stdn_str2 + ' with Add Error distribution')
 plt.hist([errorlist, errorlist_h], bins, label=['basicRNN', 'Hamm'], color=['black', 'grey'])
+plt.xlabel('ERROR')
+plt.ylabel('count')
 plt.legend(loc='upper right')
 plt.show()

@@ -32,8 +32,8 @@ roadtime = DATASET.roadtime
 DATASET.get_cleardata_totalavg()
 cleardata = DATASET.cleardata
 
-model_path = 'TDCS/models/b_std_' + stdn_str + '_add.pkl'
-model_h_path = 'TDCS/models/b_std_' + stdn_str + '_add_h.pkl'
+model_path = 'TDCS/models/b_std_' + stdn_str + '_add_g.pkl'
+model_h_path = 'TDCS/models/b_std_' + stdn_str + '_add_g_h.pkl'
 
 #load base model
 f = open('TDCS/models/b_std_' + stdn_str + '_base.pkl', 'rb')
@@ -85,8 +85,8 @@ bestadd = ADDv2.Add_model(param)
 bestadd_h = ADDv2.Add_model(param)
 
 genelength = bestadd.para_num * 20
-populationCnt = 10
-iteration = 1
+populationCnt = 30
+iteration = 10
 crossoverRate = 0.8
 mutationRate = 0.4
 

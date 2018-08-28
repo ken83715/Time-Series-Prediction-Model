@@ -71,8 +71,8 @@ besterror = 1000000000
 bestneu_h = neural.Neu()
 besterror_h = 1000000000
 
-neunum = 1
-epochs = 1
+neunum = 10
+epochs = 10
 
 for n in range(neunum): #num of neural network
     pasterror = 1000000000

@@ -31,8 +31,8 @@ roadtime = DATASET.roadtime
 DATASET.get_cleardata_totalavg()
 cleardata = DATASET.cleardata
 
-model_path = 'TDCS/models/b_std_' + stdn_str + '_add.pkl'
-model_h_path = 'TDCS/models/b_std_' + stdn_str + '_add_h.pkl'
+model_path = 'TDCS/models/b_std_' + stdn_str + '_add_r.pkl'
+model_h_path = 'TDCS/models/b_std_' + stdn_str + '_add_r_h.pkl'
 
 #load base model
 f = open('TDCS/models/b_std_' + stdn_str + '_base.pkl', 'rb')
@@ -77,7 +77,7 @@ for i in range(128667, len(roaddata) - input_num):
     test_time.append(temp2)
 
 #training
-neu_try_num = 1
+neu_try_num = 10
 
 bestadd = ADDv1.Add_model()
 besterror = 100000000

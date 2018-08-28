@@ -1,6 +1,6 @@
 """
 training base RNN and additional model
-train_with_add.py
+train_add_gene.py
 Created on 2018/06/06
 @author ken83715
 """
@@ -16,9 +16,13 @@ from RNNmodels2 import RNNv1, neural, ADDv2
 import dataset
 
 input_num = 5
+
+#==========================
 stdn_str = '10'
 stdn_str2 = '1.0'
 stdn = 1
+#==========================
+
 test_day = 7
 data_per_day = 288
 
@@ -28,8 +32,8 @@ roadtime = DATASET.roadtime
 DATASET.get_cleardata_totalavg()
 cleardata = DATASET.cleardata
 
-model_path = 'TDCS/models/b_std_' + stdn_str + '_add.pkl'
-model_h_path = 'TDCS/models/b_std_' + stdn_str + '_add_h.pkl'
+model_path = 'TDCS/models/b_std_' + stdn_str + '_add_g.pkl'
+model_h_path = 'TDCS/models/b_std_' + stdn_str + '_add_g_h.pkl'
 
 #load base model
 f = open('TDCS/models/b_std_' + stdn_str + '_base.pkl', 'rb')
@@ -82,7 +86,7 @@ bestadd_h = ADDv2.Add_model(param)
 
 genelength = bestadd.para_num * 20
 populationCnt = 30
-iteration = 1
+iteration = 10
 crossoverRate = 0.8
 mutationRate = 0.4
 
@@ -288,7 +292,10 @@ parameter = decode(gene)
 addmodel_list = generateaddmodel(parameter)
 error_list = []
 for j in range(populationCnt):
-    error_list.append(fitnessbase(addmodel_list[j]))
+    try:
+        error_list.append(fitnessbase(addmodel_list[j]))
+    except:
+        error_list.append(400)
 minerror = min(error_list)
 for i in range(len(error_list)):
     if error_list[i] == minerror:
@@ -319,7 +326,10 @@ parameter = decode(geneh)
 addmodel_list = generateaddmodel(parameter)
 error_list = []
 for j in range(populationCnt):
-    error_list.append(fitnessbase(addmodel_list[j]))
+    try:
+        error_list.append(fitnessbase(addmodel_list[j]))
+    except:
+        error_list.append(400)
 minerror = min(error_list)
 for i in range(len(error_list)):
     if error_list[i] == minerror:
