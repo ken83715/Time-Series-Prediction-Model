@@ -1,22 +1,20 @@
 """
 Hammerstein Recurrent Neural Network
-neural.py
 Created on 2017/04/23
-@author ken83715
 """
 
 import random
 import math
 import pickle
 
-class Neu:
+class Hammerstein:
     """
     Hammerstein-Wiener Recurrent Neural Network
     """
 
-    def __init__(self):
+    def __init__(self, input_number):
 
-        self.inputnumber = 5
+        self.inputnumber = input_number
         self.hidnumber = 2
         self.outputnumber = 1
 
@@ -52,6 +50,9 @@ class Neu:
         self.data_r = [] # clear every time
         self.data_q = [] # clear every time
         self.error = [] # keep
+        self.count = 0 # keep
+        self.training_MSE = [] # keep
+        self.square_e = [] # keep
         self.OD_or_a_plus = [] # keep
         self.OD_or_b_plus = [] # keep
 
@@ -59,8 +60,9 @@ class Neu:
 
     def saveneu(self, name):
         """
-        write neu to file
+        write model to file
         """
+
         f = open(name, 'wb')
         # dump the object to a file
         pickle.dump(self, f)
@@ -70,6 +72,7 @@ class Neu:
         """
         create zero list
         """
+
         createlist = []
         for i in range(row):
             temp = []
@@ -82,6 +85,7 @@ class Neu:
         """
         create random list
         """
+
         createlist = []
         for i in range(row):
             temp = []
@@ -95,6 +99,7 @@ class Neu:
         """
         create the network structure
         """
+
         self.AA = self.createrandom(self.AA, self.hidnumber, self.hidnumber)
         self.BB = self.createrandom(self.BB, self.hidnumber, 1)
         self.CC = self.createrandom(self.CC, self.outputnumber, self.hidnumber)
@@ -116,6 +121,8 @@ class Neu:
         self.data_r = self.createzero(self.data_r, self.hidnumber, 1)
         self.data_q = self.createzero(self.data_q, self.hidnumber, 1)
         self.error = self.createzero(self.error, self.outputnumber, 1)
+        self.training_MSE = self.createzero(self.training_MSE, self.outputnumber, 0)
+        self.square_e = self.createzero(self.square_e, self.outputnumber, 1)
         self.OD_or_a_plus = self.createzero(self.OD_or_a_plus, self.hidnumber, self.hidnumber)
         self.OD_or_b_plus = self.createzero(self.OD_or_b_plus, self.hidnumber, 1)
 
@@ -123,6 +130,7 @@ class Neu:
         """
         clear temp data every time
         """
+
         self.X_temp = self.createzero(self.X_temp, self.hidnumber, 1)
         self.BB_temp = self.createzero(self.BB_temp, self.hidnumber, 1)
         self.CC_temp = self.createzero(self.CC_temp, self.outputnumber, self.hidnumber)
@@ -143,6 +151,7 @@ class Neu:
         """
         clear temp data every epoch
         """
+
         self.orr = self.createzero(self.orr, self.hidnumber, 1)
 
         self.OD_or_a_plus = self.createzero(self.OD_or_a_plus, self.hidnumber, self.hidnumber)
@@ -152,6 +161,7 @@ class Neu:
         """
         calculate result
         """
+
         self.cleartemporaltrain()
 
         # layer 1: input layer
@@ -202,7 +212,7 @@ class Neu:
             self.os[i][0] = self.fs[i][0]
 
         for i in range(self.outputnumber):
-            self.Y[i] = min(1, max(-1, self.os[i][0]))
+            self.Y[i] = self.os[i][0]
 
         return self.Y
 
@@ -210,10 +220,18 @@ class Neu:
         """
         adjust weight
         """
+        
         # decide error
         for i in range(self.outputnumber):
             self.error[i][0] = expect[i] - self.Y[i]
             # print('error: ', self.error)
+
+        # calculate MSE
+        self.count = self.count + 1
+        for i in range(self.outputnumber):
+            self.square_e[i][0] = self.square_e[i][0] + self.error[i][0] * self.error[i][0]
+            self.training_MSE[i].append(self.square_e[i][0] / self.count)
+            # print('training_MSE', self.training_MSE[i])
 
         for i in range(self.outputnumber):
             self.data_s[i][0] = self.error[i][0]

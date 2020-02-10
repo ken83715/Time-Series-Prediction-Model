@@ -1,24 +1,24 @@
 """
 Additional model
-ADDv1.py
 Created on 2018/06/06
-@author ken83715
 """
 
 import random
 import math
 import pickle
 
-class Add_model:
+class AddModel:
     """
     Additional model
     """
-    def __init__(self, param):
+
+    def __init__(self, input_number):
         """
         set parameters
         """
+
         self.fuzzy_class = 3
-        self.inputnumber = 5
+        self.inputnumber = input_number
         self.fuzzy1 = self.inputnumber * self.fuzzy_class
         self.de_fuzzy1 = self.fuzzy_class
         self.outputnumber = 1
@@ -26,26 +26,22 @@ class Add_model:
         self.maxd = 0
         self.mind = 0
 
-        self.fuzzy_c = [[]]
-        self.fuzzy_sig = [[]]
-        self.w0 = [[]]
-
-        self.w1 = [[]]
-
-        self.w2 = [[]]
-        self.wr = [[]]
-        
+        self.fuzzy_c = []
+        self.fuzzy_sig = []
+        self.w0 = []
+        self.w1 = []
+        self.w2 = []
+        self.wr = []
         self.lasthidout = []
         self.output = []
 
-        self.para_num = self.fuzzy1 * 3 + self.de_fuzzy1 + 2
-
-        self.createnetwork(param)
+        self.createnetwork()
 
     def savemodel(self, modelname):
         """
         write model to file
         """
+
         f = open(modelname, 'wb')
         # dump the object to a file
         pickle.dump(self, f)
@@ -55,6 +51,7 @@ class Add_model:
         """
         create zero list
         """
+
         createlist = []
         for i in range(row):
             temp = []
@@ -67,6 +64,7 @@ class Add_model:
         """
         create random list
         """
+
         createlist = []
         for i in range(row):
             temp = []
@@ -76,29 +74,17 @@ class Add_model:
             createlist.append(temp)
         return createlist
 
-    def createnetwork(self, param):
+    def createnetwork(self):
         """
         create the network structure
         """
-        """
+
         self.fuzzy_c = self.createrandom(self.fuzzy_c, 1, self.fuzzy1, -1, 1)
         self.fuzzy_sig = self.createrandom(self.fuzzy_sig, 1, self.fuzzy1, 0, 1)
-        self.w0 = self.createrandom(self.w0, 1, self.fuzzy1, -16, 16)
-        self.w1 = self.createrandom(self.w1, 1, self.de_fuzzy1, -16, 16)
-        self.w2 = self.createrandom(self.w2, 1, self.outputnumber, -16, 16)
+        self.w0 = self.createrandom(self.w0, 1, self.fuzzy1, -4, 4)
+        self.w1 = self.createrandom(self.w1, 1, self.de_fuzzy1, -4, 4)
+        self.w2 = self.createrandom(self.w2, 1, self.outputnumber, -4, 4)
         self.wr = self.createrandom(self.wr, 1, self.outputnumber, -1, 1)
-        """
-        for i in range(self.fuzzy1):
-            self.fuzzy_c[0].append(param[i])
-        for i in range(self.fuzzy1, self.fuzzy1 * 2):
-            self.fuzzy_sig[0].append(param[i])
-        for i in range(self.fuzzy1 * 2, self.fuzzy1 * 3):
-            self.w0[0].append(param[i])
-        for i in range(self.fuzzy1 * 3, self.fuzzy1 * 3 + self.de_fuzzy1):
-            self.w1[0].append(param[i])
-        self.w2[0].append(param[-2])
-        self.wr[0].append(param[-1])
-
         self.output = self.createzero(self.output, 1, self.outputnumber)
         self.lasthidout = self.createzero(self.lasthidout, 1, 1)
 
@@ -106,6 +92,7 @@ class Add_model:
         """
         activate function
         """
+
         #tanh
         up = math.exp(inputn) - math.exp(-inputn)
         down = math.exp(inputn) + math.exp(-inputn)
@@ -115,6 +102,7 @@ class Add_model:
         """
         gaussion membership function
         """
+
         try:
             up = -(c - inputn) * (c - inputn)
             down = 2 * sig * sig
@@ -126,6 +114,7 @@ class Add_model:
         """
         calculate result
         """
+
         #caculate fuzzy output
         gaussian_out = []
         for i in range(self.inputnumber):
